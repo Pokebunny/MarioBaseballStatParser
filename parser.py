@@ -45,11 +45,11 @@ def add_files(dir):
     for entry in os.scandir(dir):
         if entry.is_dir():
             # uncomment the following line to add subdirectories
-            add_files(entry)
+            # add_files(entry)
             pass
-        elif entry.name.startswith("decoded.") and entry.name.endswith(".json"):
+        elif (entry.name.startswith("decoded.") or entry.name.startswith("crash.decoded")) and entry.name.endswith(".json"):
             full_path = os.path.join(dir, entry.name)
-            # print(full_path)
+            print(full_path)
             file = open(full_path, encoding='utf-8')
             stat_file = json.load(file)
             stars_on = 0
@@ -61,9 +61,8 @@ def add_files(dir):
                 for character in stat_file["Character Game Stats"].values():
                     char_name = character["CharID"]
 
-                    if ((character["Team"] == "1" and stat_file["Away Player"] == user)
-                        or (character["Team"] == "0" and stat_file["Home Player"] == user) or user == "") \
-                            and character["Superstar"] == stars:
+                    if ((character["Team"] == "0" and stat_file["Away Player"] == user)
+                            or (character["Team"] == "1" and stat_file["Home Player"] == user) or user == ""):
                         if char_name not in character_dict:
                             character_dict[char_name] = {}
                             character_dict[char_name]["Offensive Stats"] = character["Offensive Stats"]
@@ -114,8 +113,8 @@ def add_files(dir):
                             #             player_dict[player][stat] = character["Defensive Stats"][stat]
 
                         # Character winrates
-                        if (character["Team"] == "1" and stat_file["Away Score"] > stat_file["Home Score"]) \
-                                or (character["Team"] == "0" and stat_file["Home Score"] > stat_file["Away Score"]):
+                        if (character["Team"] == "0" and stat_file["Away Score"] > stat_file["Home Score"]) \
+                                or (character["Team"] == "1" and stat_file["Home Score"] > stat_file["Away Score"]):
                             character_dict[char_name]["Winrate Stats"]["Wins"] += 1
                         character_dict[char_name]["Winrate Stats"]["Games Played"] += 1
 
@@ -219,7 +218,7 @@ def output_results(char_dict):
             obp = (o_stats["Hits"] + o_stats["Walks (4 Balls)"] + o_stats["Walks (Hit)"]) / pa
             slg = (o_stats["Singles"] + (o_stats["Doubles"] * 2) + (o_stats["Triples"] * 3) + (o_stats["Homeruns"] * 4)) / (o_stats["At Bats"])
 
-            print(char + " (" + str(pa) + " PA): " + "{:.3f}".format(avg) + " / " + "{:.3f}".format(obp) + " / " +
+            print(str(char) + " (" + str(pa) + " PA): " + "{:.3f}".format(avg) + " / " + "{:.3f}".format(obp) + " / " +
                   "{:.3f}".format(slg) + " / " + "{:.3f}".format(obp + slg) + ", " + str(o_stats["Homeruns"]) + " HR")
 
             for stat in o_stats:
@@ -250,7 +249,7 @@ def output_results(char_dict):
             IP = (outs_pitched // 3) + (0.1 * (outs_pitched % 3))
             ERA = d_stats["Runs Allowed"] / (outs_pitched / 27)
             K = d_stats["Strikeouts"]
-            print(char + " (" + str(IP) + " IP): " + "{:.2f}".format(ERA) + " ERA, " + str(K) + " K")
+            print(str(char) + " (" + str(IP) + " IP): " + "{:.2f}".format(ERA) + " ERA, " + str(K) + " K")
             # PITCHES PER INNING
             # if d_stats["Outs Pitched"] > 0:
             #     print("Pitches per Inning: " + "{:.2f}".format(d_stats["Pitches Thrown"] / d_stats["Outs Pitched"] * 3))
@@ -281,7 +280,7 @@ def output_results(char_dict):
     total_wins = 0
     for char in sorted_winrate_list:
         if char_dict[char]["Winrate Stats"]["Games Played"] > 0:
-            print(char, "(" + str(char_dict[char]["Winrate Stats"]["Games Played"]) + " Games):", "{:.2f}".format(
+            print(str(char), "(" + str(char_dict[char]["Winrate Stats"]["Games Played"]) + " Games):", "{:.2f}".format(
                 char_dict[char]["Winrate Stats"]["Wins"] / char_dict[char]["Winrate Stats"][
                     "Games Played"] * 100) + "%")
             total_games_played += char_dict[char]["Winrate Stats"]["Games Played"]
@@ -301,6 +300,7 @@ output_results(add_files(directory))
 #     home_runs_allowed / true_IP))
 # print("Correlation between strikeouts and runs allowed:",
 #       wpcc.wpearson(strikeouts_list, runs_allowed_list, batters_faced_list))
+
 # print("Correlation between hits and runs allowed:",
 #       wpcc.wpearson(hits_allowed_list, runs_allowed_list, batters_faced_list))
 # print("Correlation between walks and runs allowed:",
